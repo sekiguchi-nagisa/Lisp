@@ -55,7 +55,8 @@ var Parser = function(str) {
 	};
 	
 	this.printTree = function() {
-		
+		console.log("type: " + this.treeOfCons.type + ", car: " + 
+				this.treeOfCons.car + ", cdr: " + typeof(this.treeOfCons.cdr));
 	};
 	
 	var temp = "";
