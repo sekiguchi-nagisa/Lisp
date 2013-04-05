@@ -6,45 +6,61 @@ var Parser = function(str) {
 	};
 	
 	this.arrayOfString = new Array();
-	this.treeOfCons = new Cons();
+	this.treeOfCons = null;
+	this.count = null;
+	this.len = null;
 	
-	
-	this.makeConsTree = function() {
-		var len = this.arrayOfString;
-		var temp;
+	var make = function(str) {
+		this.count++;
+		console.log("count =" + this.count);
+		if (this.count >= len) {
+			return null;
+		}
 
-		var make = function(index, len) {
-			var c = this.arrayOfString[index];
-			switch (c) {
-			case '+':
-			case '-':
-			case '*':
-			case '/':
-				temp = new Cons("op", c, make(index + 1, len));
-				break;
-			case '(':
-				temp = new Cons("head", 0, 0);
-				break;
-			case ')':
-				temp = new Cons("tail", 0, 0);
-				break;
-			default:
-				var num = parseInt(c);
-				if (num == NaN) {
-					temp = new Cons("var", c, 0);
-				} else {
-					temp = new Cons("num", num, 0);
-				}
+		var temp;
+		var c = str[this.count];
+		console.log("c = " + c);
+		switch (c) {
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+			temp = new Cons("op", c, make(str));
+			break;
+		case '#':
+			temp = new Cons("car", make(str), make(str));
+			break;
+		case '(':
+			temp = new Cons("head", c, make(str));
+			break;
+		case ')':
+			temp = new Cons("tail", c, null);
+			break;
+		default:
+			var num = parseInt(c);
+			if (num == NaN) {
+				temp = new Cons("var", c, make(str));
+			} else {
+				temp = new Cons("num", num, make(str));
 			}
-		};
+			break;
+		}
+		return temp;
 	};
 	
-	var len = str.length;
+	this.makeConsTree = function() {
+		this.len = this.arrayOfString.length;
+		this.count = -1;
+		console.log("len = " + len);
+		this.treeOfCons = new Cons("dummy", 0, make(this.arrayOfString));
+	};
+	
 	var temp = "";
-	for (var i = 0; i < len; i++) {
+	for (var i = 0, len = str.length; i < len; i++) {
 		var c = str.charAt(i);
 		switch (c) {
 		case '(':
+			this.arrayOfString.push('#');
 		case ')':
 			if (temp.length != 0) {
 				this.arrayOfString.push(temp);
@@ -67,8 +83,11 @@ var Parser = function(str) {
 
 
 
-var p = new Parser("(+ (* x 2) (- y 234) z)");
+//var p = new Parser("(+ (* x 2) (- y 234) z)");
+var p = new Parser(")");
 console.log(p.arrayOfString);
+p.makeConsTree();
+console.log(p.treeOfCons);
 
                   
                         
