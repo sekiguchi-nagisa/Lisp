@@ -38,7 +38,7 @@ var Parser = function(str) {
 			break;
 		default:
 			var num = parseInt(c);
-			if (num == NaN) {
+			if (isNaN(num)) {
 				temp = new Cons("var", c, this.make(str));
 			} else {
 				temp = new Cons("num", num, this.make(str));
@@ -50,13 +50,27 @@ var Parser = function(str) {
 	
 	this.makeConsTree = function() {
 		this.len = this.arrayOfString.length;
+		this.count = 0;
 		console.log("len = " + len);
 		this.treeOfCons = new Cons("dummy", 0, this.make(this.arrayOfString));
 	};
 	
 	this.printTree = function() {
-		console.log("type: " + this.treeOfCons.type + ", car: " + 
-				this.treeOfCons.car + ", cdr: " + typeof(this.treeOfCons.cdr));
+		this.count = 0;
+		this.print(this.treeOfCons);
+	};
+	
+	this.print = function(cons) {
+		this.count++;
+		console.log("{ type: " + cons.type + ", car: " + 
+				cons.car + ", cdr: " + typeof(cons.cdr) 
+				+ this.count + " }");
+		if (cons.type == "car") {
+			this.print(cons.car);
+		}
+		if (cons.cdr != null) {
+			this.print(cons.cdr);
+		}
 	};
 	
 	var temp = "";
@@ -95,11 +109,11 @@ var Execute = function(consTree) {
 
 
 
-//var p = new Parser("(+ (* x 2) (- y 234) z)");
-var p = new Parser("(+ 2 3)");
+var p = new Parser("(+ (* x 2) (- y 234) z)");
+//var p = new Parser("(+ 2 3)");
 console.log(p.arrayOfString);
 p.makeConsTree();
-console.log(p.treeOfCons);
+p.printTree();
 
                   
                         
