@@ -5,19 +5,19 @@ var Parser = function(str) {
 		this.cdr = cdr;
 	};
 	
-	this.arrayOfString = new Array();
+	this.arrayOfString = [];
 	this.treeOfCons = null;
-	this.count = null;
+	this.count = 0;
 	this.len = null;
 	
-	var make = function(str) {
+	this.make = function(str) {
 		this.count++;
 		console.log("count =" + this.count);
 		if (this.count >= len) {
 			return null;
 		}
 
-		var temp;
+		var temp = null;
 		var c = str[this.count];
 		console.log("c = " + c);
 		switch (c) {
@@ -25,13 +25,13 @@ var Parser = function(str) {
 		case '-':
 		case '*':
 		case '/':
-			temp = new Cons("op", c, make(str));
+			temp = new Cons("op", c, this.make(str));
 			break;
 		case '#':
-			temp = new Cons("car", make(str), make(str));
+			temp = new Cons("car", this.make(str), this.make(str));	
 			break;
 		case '(':
-			temp = new Cons("head", c, make(str));
+			temp = new Cons("head", c, this.make(str));
 			break;
 		case ')':
 			temp = new Cons("tail", c, null);
@@ -39,9 +39,9 @@ var Parser = function(str) {
 		default:
 			var num = parseInt(c);
 			if (num == NaN) {
-				temp = new Cons("var", c, make(str));
+				temp = new Cons("var", c, this.make(str));
 			} else {
-				temp = new Cons("num", num, make(str));
+				temp = new Cons("num", num, this.make(str));
 			}
 			break;
 		}
@@ -50,9 +50,8 @@ var Parser = function(str) {
 	
 	this.makeConsTree = function() {
 		this.len = this.arrayOfString.length;
-		this.count = -1;
 		console.log("len = " + len);
-		this.treeOfCons = new Cons("dummy", 0, make(this.arrayOfString));
+		this.treeOfCons = new Cons("dummy", 0, this.make(this.arrayOfString));
 	};
 	
 	var temp = "";
@@ -83,8 +82,7 @@ var Parser = function(str) {
 
 
 
-//var p = new Parser("(+ (* x 2) (- y 234) z)");
-var p = new Parser(")");
+var p = new Parser("(+ (* x 2) (- y 234) z)");
 console.log(p.arrayOfString);
 p.makeConsTree();
 console.log(p.treeOfCons);
