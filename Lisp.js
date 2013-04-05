@@ -1,10 +1,10 @@
+var Cons = function(type, car, cdr) {
+	this.type = type;
+	this.car = car;
+	this.cdr = cdr;
+};
+
 var Parser = function(str) {
-	var Cons = function(type, car, cdr) {
-		this.type = type;
-		this.car = car;
-		this.cdr = cdr;
-	};
-	
 	this.arrayOfString = [];
 	this.treeOfCons = null;
 	this.count = 0;
@@ -54,6 +54,10 @@ var Parser = function(str) {
 		this.treeOfCons = new Cons("dummy", 0, this.make(this.arrayOfString));
 	};
 	
+	this.printTree = function() {
+		
+	};
+	
 	var temp = "";
 	for (var i = 0, len = str.length; i < len; i++) {
 		var c = str.charAt(i);
@@ -80,9 +84,18 @@ var Parser = function(str) {
 	}
 };
 
+var Execute = function(consTree) {
+	this.consTree = consTree;
+	
+	this.exe = function() {
+		
+	};
+};
 
 
-var p = new Parser("(+ (* x 2) (- y 234) z)");
+
+//var p = new Parser("(+ (* x 2) (- y 234) z)");
+var p = new Parser("(+ 2 3)");
 console.log(p.arrayOfString);
 p.makeConsTree();
 console.log(p.treeOfCons);
