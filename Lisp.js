@@ -25,6 +25,8 @@ var Parser = function(str) {
 		case '-':
 		case '*':
 		case '/':
+		case '<':
+		case 'if':
 			temp = new Cons("op", c, this.make(str));
 			break;
 		case '#':
@@ -103,10 +105,27 @@ var Parser = function(str) {
 			temp = Math.floor(temp / array[i]);
 		}
 		return temp;	
+	}
+	
+	var isSmall = function(array) {
+		if (array[0] < array[1]) {
+			return "t";
+		} else {
+			return "nil";
+		}
 	}	
+
+	var isLarge = function(array) {
+		if (array[0] > array[1]) {
+			return "t";
+		} else {
+			return "nil";
+		}
+	}	
+	
 		
 	this.execute = function() {
-		console.log(this.evaluate(this.treeOfCons.cdr));
+		console.log(this.evaluate(this.treeOfCons.cdr)[0]);
 	}
 	
 	this.evaluate = function(cons) {
@@ -133,6 +152,20 @@ var Parser = function(str) {
 			case "/":
 				array.push(div(this.evaluate(cons.cdr)));
 				return array;
+			case "<":
+				array.push(isSmall(this.evaluate(cons.cdr)));
+				return array;		
+			case ">":
+				array.push(isLarge(this.evaluate(cons.cdr)));
+				return array;	
+			case "if":
+				var bool = this.evaluate(cons.cdr)[0];
+				console.log("bool = " + bool);
+				if (bool == "t") {
+					return this.evaluate(cons.cdr.cdr);
+				} else {
+					return this.evaluate(cons.cdr.cdr.cdr);
+				}
 			}				
 		case "head":
 			return this.evaluate(cons.cdr);
@@ -169,10 +202,7 @@ var Parser = function(str) {
 };
 
 
-
-
-var p = new Parser("(+ (* 3 2) (- 234 230) 5)");
-//var p = new Parser("(- 2 3 4)");
+var p = new Parser("(if (< 5 4) (+ (* 3 2) (- 234 230) 5) (- 2 3 4))");
 console.log(p.arrayOfString);
 p.makeConsTree();
 p.printTree();
