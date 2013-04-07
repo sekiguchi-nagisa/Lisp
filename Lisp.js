@@ -39,7 +39,7 @@ var Parser = function(str) {
 		default:
 			var num = parseInt(c);
 			if (isNaN(num)) {
-				temp = new Cons("var", c, this.make(str));
+				temp = new Cons("arg", c, this.make(str));
 			} else {
 				temp = new Cons("num", num, this.make(str));
 			}
@@ -73,6 +73,75 @@ var Parser = function(str) {
 		}
 	};
 	
+	var add = function(array) {
+		var temp = array[0];
+		for (var i = 1, len = array.length; i < len; i++) {
+			temp += array[i];
+		}
+		return temp;
+	}
+	
+	var sub = function(array) {
+		var temp = array[0];
+		for (var i = 1, len = array.length; i < len; i++) {
+			temp -= array[i];
+		}
+		return temp;	
+	}
+
+	var mul = function(array) {
+		var temp = array[0];
+		for (var i = 1, len = array.length; i < len; i++) {
+			temp *= array[i];
+		}
+		return temp;	
+	}
+
+	var div = function(array) {
+		var temp = array[0];
+		for (var i = 1, len = array.length; i < len; i++) {
+			temp = Math.floor(temp / array[i]);
+		}
+		return temp;	
+	}	
+		
+	this.execute = function() {
+		console.log(this.evaluate(this.treeOfCons.cdr));
+	}
+	
+	this.evaluate = function(cons) {
+		var array = [];
+		switch (cons.type) {
+		case "num":
+			array.push(cons.car);
+			if (cons.cdr.type == "tail") {
+				return array
+			} else {
+				return array.concat(this.evaluate(cons.cdr));
+			}
+		case "op":
+			switch (cons.car) {
+			case "+":
+				array.push(add(this.evaluate(cons.cdr)));
+				return array;
+			case "-":
+				array.push(sub(this.evaluate(cons.cdr)));
+				return array;
+			case "*":
+				array.push(mul(this.evaluate(cons.cdr)));
+				return array;
+			case "/":
+				array.push(div(this.evaluate(cons.cdr)));
+				return array;
+			}				
+		case "head":
+			return this.evaluate(cons.cdr);
+		case "car":
+			return this.evaluate(cons.car).concat(this.evaluate(cons.cdr));
+		}
+		
+	}
+	
 	var temp = "";
 	for (var i = 0, len = str.length; i < len; i++) {
 		var c = str.charAt(i);
@@ -99,27 +168,14 @@ var Parser = function(str) {
 	}
 };
 
-var Execute = function(consTree) {
-	this.consTree = consTree;
-	
-	this.exe = function() {
-		
-	};
-};
 
 
 
-var p = new Parser("(+ (* x 2) (- y 234) z)");
-//var p = new Parser("(+ 2 3)");
+var p = new Parser("(+ (* 3 2) (- 234 230) 5)");
+//var p = new Parser("(- 2 3 4)");
 console.log(p.arrayOfString);
 p.makeConsTree();
 p.printTree();
+p.execute();
 
                   
-                        
-
-                    
-
-
-                    
-                    
