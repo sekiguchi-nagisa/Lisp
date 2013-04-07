@@ -85,7 +85,7 @@ var Parser = function() {
 				i < len; i++) {
 			this.len = this.arrayOfParsedString[i].length;	
 			this.count = -1;
-			consTree = new Cons("dummy", 0, this.make(this.arrayOfParsedString[i]));
+			consTree = this.make(this.arrayOfParsedString[i]);
 			this.arrayOfConsTree.push(consTree);	
 		}
 	};
@@ -111,7 +111,7 @@ var Parser = function() {
 			temp = new Cons("car", this.make(str), this.make(str));	
 			break;
 		case '(':
-			temp = new Cons("head", c, this.make(str));
+			temp = this.make(str);
 			break;
 		case ')':
 			if (this.argFlag == 1) {
@@ -119,7 +119,7 @@ var Parser = function() {
 				var funcDef = new FuncDef(this.arrayOfArg);
 				this.arrayOfFuncDef[this.key] = funcDef;
 			}
-			temp = new Cons("tail", c, null);
+			temp = null;
 			break;
 		case 'defun':
 			this.funcFlag = 1;
@@ -199,7 +199,7 @@ var Parser = function() {
 	this.execute = function() {
 		for (var i = 0, len = this.arrayOfConsTree.length; 
 				i < len; i++) {
-			console.log(this.evaluate(this.arrayOfConsTree[i].cdr, null));
+			console.log(this.evaluate(this.arrayOfConsTree[i], null));
 		}
 	};
 	
@@ -215,7 +215,7 @@ var Parser = function() {
 				do {
 					tempCons = tempCons.cdr;
 					ret += this.evaluate(tempCons, funcDef);
-				} while (tempCons.cdr.type != "tail");
+				} while (tempCons.cdr != null);
 				return ret;
 			case "-":
 				var ret = this.evaluate(cons.cdr, funcDef);
@@ -223,7 +223,7 @@ var Parser = function() {
 				do {
 					tempCons = tempCons.cdr;
 					ret -= this.evaluate(tempCons, funcDef);
-				} while (tempCons.cdr.type != "tail");
+				} while (tempCons.cdr != null);
 				return ret;				
 			case "*":
 				var ret = this.evaluate(cons.cdr, funcDef);
@@ -231,7 +231,7 @@ var Parser = function() {
 				do {
 					tempCons = tempCons.cdr;
 					ret *= this.evaluate(tempCons, funcDef);
-				} while (tempCons.cdr.type != "tail");
+				} while (tempCons.cdr != null);
 				return ret;
 			case "/":
 				var ret = this.evaluate(cons.cdr, funcDef);
@@ -239,7 +239,7 @@ var Parser = function() {
 				do {
 					tempCons = tempCons.cdr;
 					ret /= this.evaluate(tempCons, funcDef);
-				} while (tempCons.cdr.type != "tail");
+				} while (tempCons.cdr != null);
 				return ret;
 			case "<":
 				var ret1 = this.evaluate(cons.cdr, funcDef);
@@ -267,8 +267,6 @@ var Parser = function() {
 					return this.evaluate(cons.cdr.cdr.cdr, funcDef);
 				}
 			}				
-		case "head":
-			return this.evaluate(cons.cdr, funcDef);
 		case "car":
 			return this.evaluate(cons.car, funcDef);
 		case "defun":
