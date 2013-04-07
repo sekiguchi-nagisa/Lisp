@@ -16,7 +16,14 @@ var Parser = function() {
 	};
 	
 	var FuncDef = function(arrayOfArg) {
-		this.arrayOfArg = arrayOfArg;
+		var len = arrayOfArg.length;
+		var newArgs = [];
+		
+		for (var i = 0; i < len; i++) {
+			newArgs.push(arrayOfArg[i].slice(0));
+		}
+	
+		this.arrayOfArg = newArgs;
 		this.arrayOfArgValue = new Object();
 		this.consTree = null;
 	};
@@ -85,14 +92,12 @@ var Parser = function() {
 	
 	this.make = function(str) {
 		this.count++;
-		//console.log("count =" + this.count);
 		if (this.count >= this.len) {
 			return null;
 		}
 
 		var temp = null;
 		var c = str[this.count];
-		//console.log("c = " + c);
 		switch (c) {
 		case '+':
 		case '-':
@@ -191,54 +196,6 @@ var Parser = function() {
 		this.print(this.arrayOfFuncDef[key].consTree);
 	};
 	
-	var add = function(array) {
-		var temp = array[0];
-		for (var i = 1, len = array.length; i < len; i++) {
-			temp += array[i];
-		}
-		return temp;
-	};
-	
-	var sub = function(array) {
-		var temp = array[0];
-		for (var i = 1, len = array.length; i < len; i++) {
-			temp -= array[i];
-		}
-		return temp;	
-	};
-
-	var mul = function(array) {
-		var temp = array[0];
-		for (var i = 1, len = array.length; i < len; i++) {
-			temp *= array[i];
-		}
-		return temp;	
-	};
-
-	var div = function(array) {
-		var temp = array[0];
-		for (var i = 1, len = array.length; i < len; i++) {
-			temp = Math.floor(temp / array[i]);
-		}
-		return temp;	
-	};
-	
-	var isSmall = function(array) {
-		if (array[0] < array[1]) {
-			return "t";
-		} else {
-			return "nil";
-		}
-	};	
-
-	var isLarge = function(array) {
-		if (array[0] > array[1]) {
-			return "t";
-		} else {
-			return "nil";
-		}
-	};	
-	
 	this.execute = function() {
 		for (var i = 0, len = this.arrayOfConsTree.length; 
 				i < len; i++) {
@@ -247,41 +204,63 @@ var Parser = function() {
 	};
 	
 	this.evaluate = function(cons, funcDef) {
-		var array = [];
 		switch (cons.type) {
 		case "num":
-			console.log("type = " + cons.type + ", car = " + cons.car);
-			array.push(cons.car);
-			if (cons.cdr.type == "tail") {
-				return array
-			} else {
-				return array.concat(this.evaluate(cons.cdr, funcDef));
-			}
+			return cons.car;
 		case "op":
 			switch (cons.car) {
 			case "+":
-				array.push(add(this.evaluate(cons.cdr, funcDef)));
-				return array;
+				var ret = this.evaluate(cons.cdr, funcDef);
+				var tempCons = cons.cdr;
+				do {
+					tempCons = tempCons.cdr;
+					ret += this.evaluate(tempCons, funcDef);
+				} while (tempCons.cdr.type != "tail");
+				return ret;
 			case "-":
-				array.push(sub(this.evaluate(cons.cdr, funcDef)));
-				return array;
+				var ret = this.evaluate(cons.cdr, funcDef);
+				var tempCons = cons.cdr;
+				do {
+					tempCons = tempCons.cdr;
+					ret -= this.evaluate(tempCons, funcDef);
+				} while (tempCons.cdr.type != "tail");
+				return ret;				
 			case "*":
-				array.push(mul(this.evaluate(cons.cdr, funcDef)));
-				return array;
+				var ret = this.evaluate(cons.cdr, funcDef);
+				var tempCons = cons.cdr;
+				do {
+					tempCons = tempCons.cdr;
+					ret *= this.evaluate(tempCons, funcDef);
+				} while (tempCons.cdr.type != "tail");
+				return ret;
 			case "/":
-				array.push(div(this.evaluate(cons.cdr, funcDef)));
-				return array;
+				var ret = this.evaluate(cons.cdr, funcDef);
+				var tempCons = cons.cdr;
+				do {
+					tempCons = tempCons.cdr;
+					ret /= this.evaluate(tempCons, funcDef);
+				} while (tempCons.cdr.type != "tail");
+				return ret;
 			case "<":
-				console.log("type = " + cons.car);
-				array.push(isSmall(this.evaluate(cons.cdr, funcDef)));
-				return array;		
+				var ret1 = this.evaluate(cons.cdr, funcDef);
+				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				
+				if (ret1 < ret2) {
+					return "t";
+				} else {
+					return "nil";
+				}		
 			case ">":
-				array.push(isLarge(this.evaluate(cons.cdr, funcDef)));
-				return array;	
+				var ret1 = this.evaluate(cons.cdr, funcDef);
+				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				
+				if (ret1 > ret2) {
+					return "t";
+				} else {
+					return "nil";
+				}
 			case "if":
-				console.log("type = " + cons.car);
-				var bool = this.evaluate(cons.cdr, funcDef)[0];
-				console.log("bool = " + bool);
+				var bool = this.evaluate(cons.cdr, funcDef);
 				if (bool == "t") {
 					return this.evaluate(cons.cdr.cdr, funcDef);
 				} else {
@@ -291,46 +270,34 @@ var Parser = function() {
 		case "head":
 			return this.evaluate(cons.cdr, funcDef);
 		case "car":
-			return this.evaluate(cons.car, funcDef).concat(this.evaluate(cons.cdr, funcDef));
+			return this.evaluate(cons.car, funcDef);
 		case "defun":
 			var key = cons.cdr.car;	
 			this.arrayOfFuncDef[key].consTree = cons.cdr.cdr.cdr.car;			
-			array = new Array(key.toUpperCase());
-			return array;
+			return key.toUpperCase();
 		case "func":
-			console.log("key = " + cons.car);
-			var tempFuncDef = this.arrayOfFuncDef[cons.car];
-			//console.log(cons.cdr);
-			return this.call(tempFuncDef, this.evaluate(cons.cdr, funcDef));
+			var tempFuncDef = new FuncDef(this.arrayOfFuncDef[cons.car].arrayOfArg);
+			var len = tempFuncDef.arrayOfArg.length;
+			var tempCons = cons;
+	
+			tempFuncDef.consTree = this.arrayOfFuncDef[cons.car].consTree;
+			for (var i = 0; i < len; i++) {
+				var key = tempFuncDef.arrayOfArg[i];
+				tempCons = tempCons.cdr;
+				var arg = this.evaluate(tempCons, funcDef);
+				tempFuncDef.arrayOfArgValue[key] = arg;
+			}
+			return this.evaluate(tempFuncDef.consTree, tempFuncDef);
 		case "arg":
 			var num = funcDef.arrayOfArgValue[cons.car];
-			console.log("num = " + num);
-			//var num = 3;
-			array.push(num);
-			if (cons.cdr.type == "tail") {
-				return array
-			} else {
-				return array.concat(this.evaluate(cons.cdr, funcDef));
-			}		
+			return num;		
 		}
-	};
-	
-	this.call = function(funcDef, argValue) {
-		for (var i = 0, len = argValue.length; i < len; i++) {
-			var key = funcDef.arrayOfArg[i];
-			//console.log("key = " + key);
-			funcDef.arrayOfArgValue[key] = argValue[i];	
-			//console.log("argValue = " + argValue[i]);
-		}
-		return this.evaluate(funcDef.consTree, funcDef);
 	};
 };
 
 
 var p = new Parser();
-p.parse("(defun fib (n) (if (< n 4) 1 4)) (fib 2)");
-//p.parse("(defun twice (n) (+ n n))");
-//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 1)");
+p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
 //console.log(p.arrayOfParsedString);
 p.makeConsTree();
 //p.printTree();
