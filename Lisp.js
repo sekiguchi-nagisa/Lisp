@@ -293,13 +293,54 @@ var Parser = function() {
 	};
 };
 
-
 var p = new Parser();
-p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
-//console.log(p.arrayOfParsedString);
-p.makeConsTree();
-//p.printTree();
-p.execute();
-//p.printFunc("fib");
+var args = process.argv;
+var len = args.length;
+
+switch (len) {
+case 2:
+	var readline = require("readline");
+	var repl = readline.createInterface(process.stdin, process.stdout);
+	//プロンプトの形を設定
+	repl.setPrompt(">>> ");
+
+	//プロンプトを出す
+	repl.prompt();
+
+	// mainループ
+	repl.on("line", function(line) {
+		console.log(line); //変数lineにシェルに入力した文字列が入るので、これを解析すれば良い。
+		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
+		p.parse(line);
+		//console.log(p.arrayOfParsedString);
+		p.makeConsTree();
+		//p.printTree();
+		p.execute();
+		//p.printFunc("fib");
+	
+		repl.prompt();
+	});
+
+	// 終了時に呼ぶ
+	repl.on("close", function() {
+		console.log("bye!");
+	});	
+	break;
+case 3:
+	var fs = require('fs');
+	fs.readFile(args[2], 'utf8', function(err, str) {
+		if (err) {
+			console.log(err);
+		} else {
+			p.parse(str);
+			p.makeConsTree();
+			p.execute();
+		}
+	});
+	break;
+default:
+	console.log("invalid argument");
+	break;
+}
 
    
