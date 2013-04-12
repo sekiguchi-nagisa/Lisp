@@ -147,7 +147,7 @@ var ConsGen = function() {
 						this.arrayOfArg.push(c);
 						temp = new Cons("arg", c, this.make(str));
 					} else {
-						var type = "var";
+						var type = "variable";
 						for (var i = 0, len = this.arrayOfArg.length; 
 								i < len; i++) {
 							if (this.arrayOfArg[i] == c) {
@@ -156,7 +156,7 @@ var ConsGen = function() {
 							}
 						}
 						
-						if (type == "var") {
+						if (type == "variable") {
 							var value = this.arrayOfFuncDef[c];
 							if (typeof(value) === "undefined") {
 							} else {
@@ -176,8 +176,8 @@ var ConsGen = function() {
 	
 	this.printTree = function() {
 		console.log("printTree()");
-		for (var i = 0, len = this.arrayOfConsTree.length; 
-				i < len; i++) {
+		for (var i = 0, consTreesNum = this.arrayOfConsTree.length; 
+				i < consTreesNum; i++) {
 			this.count = 0;
 			this.print(this.arrayOfConsTree[i]);	
 			console.log("");
@@ -204,8 +204,8 @@ var ConsGen = function() {
 	};
 	
 	this.execute = function() {
-		for (var i = 0, len = this.arrayOfConsTree.length; 
-				i < len; i++) {
+		for (var i = 0, consTreesNum = this.arrayOfConsTree.length; 
+				i < consTreesNum; i++) {
 			console.log(this.evaluate(this.arrayOfConsTree[i], null));
 		}
 	};
@@ -277,34 +277,33 @@ var ConsGen = function() {
 		case "car":
 			return this.evaluate(cons.car, funcDef);
 		case "defun":
-			var key = cons.cdr.car;	
-			this.arrayOfFuncDef[key].consTree = cons.cdr.cdr.cdr.car;			
-			return key.toUpperCase();
+			var funcKey = cons.cdr.car;	
+			this.arrayOfFuncDef[funcKey].consTree = cons.cdr.cdr.cdr.car;			
+			return funcKey.toUpperCase();
 		case "func":
 			var tempFuncDef = new FuncDef(this.arrayOfFuncDef[cons.car].arrayOfArg);
-			var len = tempFuncDef.arrayOfArg.length;
+			var argLen = tempFuncDef.arrayOfArg.length;
 			var tempCons = cons;
 	
 			tempFuncDef.consTree = this.arrayOfFuncDef[cons.car].consTree;
-			for (var i = 0; i < len; i++) {
-				var key = tempFuncDef.arrayOfArg[i];
+			for (var i = 0; i < argLen; i++) {
+				var argKey = tempFuncDef.arrayOfArg[i];
 				tempCons = tempCons.cdr;
 				var arg = this.evaluate(tempCons, funcDef);
-				tempFuncDef.arrayOfArgValue[key] = arg;
+				tempFuncDef.arrayOfArgValue[argKey] = arg;
 			}
 			return this.evaluate(tempFuncDef.consTree, tempFuncDef);
 		case "arg":
-			var num = funcDef.arrayOfArgValue[cons.car];
-			return num;	
+			var argNum = funcDef.arrayOfArgValue[cons.car];
+			return argNum;	
 		case "setq":
-			var key = cons.cdr.car;
-			console.log("key = " + key);
-			var ret = this.evaluate(cons.cdr.cdr, funcDef);
-			this.arrayOfVariable[key] = ret;
-			return ret;
-		case "var":
-			var num = this.arrayOfVariable[cons.car];
-			return num;	
+			var varKey = cons.cdr.car;
+			var setqRet = this.evaluate(cons.cdr.cdr, funcDef);
+			this.arrayOfVariable[varKey] = setqRet;
+			return setqRet;
+		case "variable":
+			var varNum = this.arrayOfVariable[cons.car];
+			return varNum;	
 		}
 	};
 };
