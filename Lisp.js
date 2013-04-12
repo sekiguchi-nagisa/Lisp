@@ -52,6 +52,7 @@ var parse = function(str) {
 var ConsGen = function() {
 	this.arrayOfConsTree = [];
 	this.arrayOfFuncDef = new Object();
+	this.arrayOfVariable = new Object();
 	this.arrayOfParsedString = [];
 	
 	this.count = -1;
@@ -130,6 +131,9 @@ var ConsGen = function() {
 			this.arrayOfArg = [];
 			temp = new Cons("defun", c, this.make(str));
 			break;
+		case 'setq':
+			temp = new Cons("setq", c, this.make(str));
+			break;
 		default:
 			var num = parseInt(c);
 			if (isNaN(num)) {
@@ -143,7 +147,7 @@ var ConsGen = function() {
 						this.arrayOfArg.push(c);
 						temp = new Cons("arg", c, this.make(str));
 					} else {
-						var type = "local";
+						var type = "var";
 						for (var i = 0, len = this.arrayOfArg.length; 
 								i < len; i++) {
 							if (this.arrayOfArg[i] == c) {
@@ -152,7 +156,7 @@ var ConsGen = function() {
 							}
 						}
 						
-						if (type == "local") {
+						if (type == "var") {
 							var value = this.arrayOfFuncDef[c];
 							if (typeof(value) === "undefined") {
 							} else {
@@ -291,7 +295,16 @@ var ConsGen = function() {
 			return this.evaluate(tempFuncDef.consTree, tempFuncDef);
 		case "arg":
 			var num = funcDef.arrayOfArgValue[cons.car];
-			return num;		
+			return num;	
+		case "setq":
+			var key = cons.cdr.car;
+			console.log("key = " + key);
+			var ret = this.evaluate(cons.cdr.cdr, funcDef);
+			this.arrayOfVariable[key] = ret;
+			return ret;
+		case "var":
+			var num = this.arrayOfVariable[cons.car];
+			return num;	
 		}
 	};
 };
