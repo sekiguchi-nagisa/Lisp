@@ -1,7 +1,59 @@
-var Parser = function() {
-	this.arrayOfParsedString = [];
+var parse = function(str) {
+	var temp = "";
+	var parsedString = [];
+	var arrayOfParsedString = [];
+	var flag = 0;
+	var headCount = 0;
+	var tailCount = 0;
+	for (var i = 0, len = str.length; i < len; i++) {
+		var c = str.charAt(i);
+		switch (c) {
+		case '(':
+		    headCount++;
+			if (flag == 0) {
+				flag = 1;
+			} else {
+				parsedString.push('#');
+			}
+			parsedString.push(c);
+			break;
+		case ')':
+			tailCount++;
+			if (temp.length != 0) {
+				parsedString.push(temp);
+				temp = "";
+			}
+			parsedString.push(c);
+			
+			if (headCount == tailCount) {
+				flag = 0;
+				headCount = 0;
+				tailCount = 0;
+				arrayOfParsedString.push(parsedString);
+				parsedString = [];
+			}
+			break;
+		case ' ':
+		case '\t':
+		case '\n':
+			if (temp.length != 0) {
+				parsedString.push(temp);
+				temp = "";
+			}
+			break;
+		default:
+			temp = temp.concat(c);
+			break;
+		}
+	}
+	return arrayOfParsedString;
+};
+
+var ConsGen = function() {
 	this.arrayOfConsTree = [];
 	this.arrayOfFuncDef = new Object();
+	this.arrayOfParsedString = [];
+	
 	this.count = -1;
 	this.len = null;
 	this.funcFlag = 0;
@@ -28,57 +80,8 @@ var Parser = function() {
 		this.consTree = null;
 	};
 	
-	this.parse = function(str) {
-		var temp = "";
-		var parsedString = [];
-		var flag = 0;
-		var headCount = 0;
-		var tailCount = 0;
-		this.arrayOfParsedString = [];
-		for (var i = 0, len = str.length; i < len; i++) {
-			var c = str.charAt(i);
-			switch (c) {
-			case '(':
-		    	headCount++;
-				if (flag == 0) {
-					flag = 1;
-				} else {
-					parsedString.push('#');
-				}
-				parsedString.push(c);
-				break;
-			case ')':
-				tailCount++;
-				if (temp.length != 0) {
-					parsedString.push(temp);
-					temp = "";
-				}
-				parsedString.push(c);
-			
-				if (headCount == tailCount) {
-					flag = 0;
-					headCount = 0;
-					tailCount = 0;
-					this.arrayOfParsedString.push(parsedString);
-					parsedString = [];
-				}
-				break;
-			case ' ':
-			case '\t':
-			case '\n':
-				if (temp.length != 0) {
-					parsedString.push(temp);
-					temp = "";
-				}
-				break;
-			default:
-				temp = temp.concat(c);
-				break;
-			}
-		}
-	};
-	
-	this.makeConsTree = function() {
+	this.makeConsTree = function(arrayOfParsedString) {
+		this.arrayOfParsedString = arrayOfParsedString;
 		this.arrayOfConsTree = [];
 		var consTree;
 		for (var i = 0, len = this.arrayOfParsedString.length;
@@ -293,7 +296,7 @@ var Parser = function() {
 	};
 };
 
-var p = new Parser();
+var g = new ConsGen();
 var args = process.argv;
 var len = args.length;
 
@@ -311,12 +314,10 @@ case 2:
 	repl.on("line", function(line) {
 		console.log(line); //変数lineにシェルに入力した文字列が入るので、これを解析すれば良い。
 		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
-		p.parse(line);
-		//console.log(p.arrayOfParsedString);
-		p.makeConsTree();
-		//p.printTree();
-		p.execute();
-		//p.printFunc("fib");
+		g.makeConsTree(parse(line));
+		//g.printTree();
+		g.execute();
+		//g.printFunc("fib");
 	
 		repl.prompt();
 	});
@@ -332,9 +333,8 @@ case 3:
 		if (err) {
 			console.log(err);
 		} else {
-			p.parse(str);
-			p.makeConsTree();
-			p.execute();
+			g.makeConsTree(parse(str));
+			g.execute();
 		}
 	});
 	break;
