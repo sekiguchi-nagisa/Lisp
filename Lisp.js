@@ -326,6 +326,7 @@ case 2:
 	repl.on("line", function(line) {
 		console.log(line); //変数lineにシェルに入力した文字列が入るので、これを解析すれば良い。
 		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
+		//p.parse("(defun tak(x y z) (if (<= x y) y (tak (tak (- x 1) y z) (tak (- y 1) z x) (tak (- z 1) x y)))) (tak 12 6 0)");
 		g.makeConsTree(parse(line));
 		//g.printTree();
 		g.execute();
