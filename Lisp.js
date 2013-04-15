@@ -87,7 +87,7 @@ function genCons(arrayOfTokenList, env) {
 			return null;
 		}
 
-		var temp = null;
+		var newCons = null;
 		var token = tokenList[tokenCount];
 		switch (token) {
 		case '+':
@@ -99,47 +99,47 @@ function genCons(arrayOfTokenList, env) {
 		case '<=':
 		case '>=':
 		case 'if':
-			temp = new Cons("op", token, makeConsTree(tokenList));
-			return temp;
+			newCons = new Cons("op", token, makeConsTree(tokenList));
+			return newCons;
 		case '(':
-			temp = new Cons("car", makeConsTree(tokenList), makeConsTree(tokenList));	
-			return temp;
+			newCons = new Cons("car", makeConsTree(tokenList), makeConsTree(tokenList));	
+			return newCons;
 		case ')':
 			if (argFlag == 1) {
 				argFlag = 0;
 				var funcInfo = new FuncInfo(arrayOfArg);
 				env.funcInfoMap[key] = funcInfo;
 			}
-			temp = null;
-			return temp;
+			newCons = null;
+			return newCons;
 		case 'defun':
 			funcFlag = 1;
 			key = null;
 			arrayOfArg = [];
-			temp = new Cons("defun", token, makeConsTree(tokenList));
-			return temp;
+			newCons = new Cons("defun", token, makeConsTree(tokenList));
+			return newCons;
 		case 'setq':
-			temp = new Cons("setq", token, makeConsTree(tokenList));
-			return temp;
+			newCons = new Cons("setq", token, makeConsTree(tokenList));
+			return newCons;
 		default:
 			var num = parseInt(token);
 			if (!isNaN(num)) {
-				temp = new Cons("num", num, makeConsTree(tokenList));
-				return temp;
+				newCons = new Cons("num", num, makeConsTree(tokenList));
+				return newCons;
 			}
 			
 			if (funcFlag == 1) {
 				funcFlag = 0;
 				argFlag = 1;
 				key = token;
-				temp = new Cons("func", token, makeConsTree(tokenList));
-				return temp;
+				newCons = new Cons("func", token, makeConsTree(tokenList));
+				return newCons;
 			} 
 				
 			if (argFlag == 1) {
 				arrayOfArg.push(token);
-				temp = new Cons("arg", token, makeConsTree(tokenList));
-				return temp;
+				newCons = new Cons("arg", token, makeConsTree(tokenList));
+				return newCons;
 			} 
 				
 			var type = "variable";
@@ -147,8 +147,8 @@ function genCons(arrayOfTokenList, env) {
 					i < len; i++) {
 				if (arrayOfArg[i] == token) {
 					type = "arg";
-					temp = new Cons(type, token, makeConsTree(tokenList));	
-					return temp;
+					newCons = new Cons(type, token, makeConsTree(tokenList));	
+					return newCons;
 				}
 			}
 						
@@ -159,8 +159,8 @@ function genCons(arrayOfTokenList, env) {
 					type = "func";
 				}
 			}
-			temp = new Cons(type, token, makeConsTree(tokenList));	
-			return temp;
+			newCons = new Cons(type, token, makeConsTree(tokenList));	
+			return newCons;
 		}
 	};
 	
@@ -215,40 +215,20 @@ function execute(arrayOfConsTree, env) {
 				return ret;
 			case "<":
 				var ret1 = evaluate(cons.cdr, funcInfo);
-				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
-				
-				if (ret1 < ret2) {
-					return "t";
-				} else {
-					return "nil";
-				}		
+				var ret2 = evaluate(cons.cdr.cdr, funcInfo);		
+				return ret1 < ret2 ? "t" : "nil";
 			case ">":
 				var ret1 = evaluate(cons.cdr, funcInfo);
 				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
-				
-				if (ret1 > ret2) {
-					return "t";
-				} else {
-					return "nil";
-				}
+				return ret1 > ret2 ? "t" : "nil";
 			case "<=":
 				var ret1 = evaluate(cons.cdr, funcInfo);
 				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
-				
-				if (ret1 <= ret2) {
-					return "t";
-				} else {
-					return "nil";
-				}
+				return ret1 <= ret2 ? "t" : "nil";
 			case ">=":
 				var ret1 = evaluate(cons.cdr, funcInfo);
 				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
-				
-				if (ret1 >= ret2) {
-					return "t";
-				} else {
-					return "nil";
-				}
+				return ret1 >= ret2 ? "t" : "nil";
 			case "if":
 				var bool = evaluate(cons.cdr, funcInfo);
 				if (bool == "t") {
@@ -277,16 +257,14 @@ function execute(arrayOfConsTree, env) {
 			}
 			return evaluate(tempfuncInfo.consTree, tempfuncInfo);
 		case "arg":
-			var argValue = funcInfo.arrayOfArgValue[cons.car];
-			return argValue;	
+			return funcInfo.arrayOfArgValue[cons.car];
 		case "setq":
 			var varKey = cons.cdr.car;
 			var setqRet = evaluate(cons.cdr.cdr, funcInfo);
 			env.varMap[varKey] = setqRet;
 			return setqRet;
 		case "variable":
-			var varValue = env.varMap[cons.car];
-			return varValue;	
+			return env.varMap[cons.car];	
 		}
 	};
 	
@@ -313,8 +291,8 @@ case 2:
 	// mainループ
 	repl.on("line", function(line) {
 		console.log(line); //変数lineにシェルに入力した文字列が入るので、これを解析すれば良い。
-		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
-		//p.parse("(defun tak(x y z) (if (<= x y) y (tak (tak (- x 1) y z) (tak (- y 1) z x) (tak (- z 1) x y)))) (tak 12 6 0)");
+		//(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)
+		//(defun tak(x y z) (if (<= x y) y (tak (tak (- x 1) y z) (tak (- y 1) z x) (tak (- z 1) x y)))) (tak 12 6 0)
 		var p = parse(line);
 		var consTree = genCons(p, env);
 		execute(consTree, env);
