@@ -54,10 +54,8 @@ var Cons = function(type, car, cdr) {
 };
 
 var FuncInfo= function(arrayOfArg) {
-	var len = arrayOfArg.length;
-	var newArgs = [];
-		
-	for (var i = 0; i < len; i++) {
+	var newArgs = [];	
+	for (var i = 0, len = arrayOfArg.length; i < len; i++) {
 		newArgs.push(arrayOfArg[i].slice(0));
 	}
 	
@@ -70,12 +68,9 @@ var Env = function() {
 	this.varMap = new Object();
 	this.funcInfoMap = new Object();
 	
-	var count = 0;
 	function print(cons) {
-		count++;
 		console.log("{ type: " + cons.type + ", car: " + 
-				cons.car + ", cdr: " + typeof(cons.cdr) 
-				+ count + " }");
+				cons.car + ", cdr: " + typeof(cons.cdr) + " }");
 		if (cons.type == "car") {
 			print(cons.car);
 		}
@@ -86,9 +81,7 @@ var Env = function() {
 	
 	this.printTree = function(arrayOfConsTree) {
 		console.log("printTree()");
-		for (var i = 0, consTreesNum = arrayOfConsTree.length; 
-				i < consTreesNum; i++) {
-			count = 0;
+		for (var i = 0, len = arrayOfConsTree.length; i < len; i++) {
 			print(arrayOfConsTree[i]);	
 			console.log("");
 		}
@@ -96,7 +89,6 @@ var Env = function() {
 	
 	this.printFunc = function(key, env) {
 		console.log("printFunc()");
-		count = 0;
 		print(env.funcInfoMap[key].consTree);
 	};
 };
@@ -172,8 +164,7 @@ function genCons(arrayOfTokenList, env) {
 			} 
 				
 			var type = "variable";
-			for (var i = 0, len = arrayOfArg.length; 
-					i < len; i++) {
+			for (var i = 0, len = arrayOfArg.length; i < len; i++) {
 				if (arrayOfArg[i] == token) {
 					type = "arg";
 					newCons = new Cons(type, token, makeConsTree(tokenList));	
@@ -193,8 +184,7 @@ function genCons(arrayOfTokenList, env) {
 		}
 	};
 	
-	for (var i = 0, len = arrayOfTokenList.length;
-				i < len; i++) {
+	for (var i = 0, len = arrayOfTokenList.length; i < len; i++) {
 		tokenListLen= arrayOfTokenList[i].length;	
 		tokenCount = -1;
 		var consTree = makeConsTree(arrayOfTokenList[i]);
@@ -297,8 +287,7 @@ function execute(arrayOfConsTree, env) {
 		}
 	};
 	
-	for (var i = 0, consTreesNum = arrayOfConsTree.length; 
-			i < consTreesNum; i++) {
+	for (var i = 0, len = arrayOfConsTree.length; i < len; i++) {
 		console.log(evaluate(arrayOfConsTree[i].car, null));
 	}
 };
