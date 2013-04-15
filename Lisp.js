@@ -135,39 +135,43 @@ var ConsGen = function() {
 			break;
 		default:
 			var num = parseInt(c);
-			if (isNaN(num)) {
-				if (this.funcFlag == 1) {
-					this.funcFlag = 0;
-					this.argFlag = 1;
-					key = c;
-					temp = new Cons("func", c, this.make(str));
-				} else {
-					if (this.argFlag == 1) {
-						this.arrayOfArg.push(c);
-						temp = new Cons("arg", c, this.make(str));
-					} else {
-						var type = "variable";
-						for (var i = 0, len = this.arrayOfArg.length; 
-								i < len; i++) {
-							if (this.arrayOfArg[i] == c) {
-								type = "arg";
-								break;
-							}
-						}
-						
-						if (type == "variable") {
-							var value = this.arrayOfFuncDef[c];
-							if (typeof(value) === "undefined") {
-							} else {
-								type = "func";
-							}
-						}
-						temp = new Cons(type, c, this.make(str));
-					}
-				}
-			} else {
+			if (!isNaN(num)) {
 				temp = new Cons("num", num, this.make(str));
+				return temp;
 			}
+			
+			if (this.funcFlag == 1) {
+				this.funcFlag = 0;
+				this.argFlag = 1;
+				key = c;
+				temp = new Cons("func", c, this.make(str));
+				return temp;
+			} 
+				
+			if (this.argFlag == 1) {
+				this.arrayOfArg.push(c);
+				temp = new Cons("arg", c, this.make(str));
+				return temp;
+			} 
+				
+			var type = "variable";
+			for (var i = 0, len = this.arrayOfArg.length; 
+					i < len; i++) {
+				if (this.arrayOfArg[i] == c) {
+					type = "arg";
+					break;
+				}
+			}
+						
+			if (type == "variable") {
+				var value = this.arrayOfFuncDef[c];
+				if (typeof(value) === "undefined") {
+				} else {
+					type = "func";
+				}
+			}
+			temp = new Cons(type, c, this.make(str));	
+				
 			break;
 		}
 		return temp;
