@@ -1,4 +1,4 @@
-var parse = function(expr) {
+function parse(expr) {
 	var tokenBuf = "";
 	var tokenList = [];
 	var arrayOfTokenList = [];
@@ -54,54 +54,42 @@ var Cons = function(type, car, cdr) {
 	this.cdr = cdr;
 };
 
-var ConsGen = function() {
-	this.arrayOfConsTree = [];
-	this.arrayOfFuncDef = new Object();
-	this.arrayOfVariable = new Object();
-	this.arrayOfTokenList = [];
-	
-	this.count = -1;
-	this.len = null;
-	this.funcFlag = 0;
-	this.argFlag = 0;
-	var key = null;
-	this.arrayOfArg = [];
-	
-	var FuncDef = function(arrayOfArg) {
-		var len = arrayOfArg.length;
-		var newArgs = [];
+var Env = function() {
+	this.varMap = new Object();
+	this.funcInfoMap = new Object();
+};
+
+var FuncInfo= function(arrayOfArg) {
+	var len = arrayOfArg.length;
+	var newArgs = [];
 		
-		for (var i = 0; i < len; i++) {
-			newArgs.push(arrayOfArg[i].slice(0));
-		}
+	for (var i = 0; i < len; i++) {
+		newArgs.push(arrayOfArg[i].slice(0));
+	}
 	
-		this.arrayOfArg = newArgs;
-		this.arrayOfArgValue = new Object();
-		this.consTree = null;
-	};
+	this.arrayOfArg = newArgs;
+	this.arrayOfArgValue = new Object();
+	this.consTree = null;
+};
+
+function genCons(arrayOfTokenList, env) {
+	var arrayOfConsTree = [];
+	var tokenListLen = 0;
+	var tokenCount = -1;
+	var funcFlag = 0;
+	var argFlag = 0;
+	var key = null;
+	var arrayOfArg = [];
 	
-	this.makeConsTree = function(arrayOfTokenList) {
-		this.arrayOfTokenList = arrayOfTokenList;
-		this.arrayOfConsTree = [];
-		var consTree;
-		for (var i = 0, len = this.arrayOfTokenList.length;
-				i < len; i++) {
-			this.len = this.arrayOfTokenList[i].length;	
-			this.count = -1;
-			consTree = this.make(this.arrayOfTokenList[i]);
-			this.arrayOfConsTree.push(consTree);	
-		}
-	};
-	
-	this.make = function(str) {
-		this.count++;
-		if (this.count >= this.len) {
+	function makeConsTree(tokenList) {
+		tokenCount++;
+		if (tokenCount >= tokenListLen) {
 			return null;
 		}
 
 		var temp = null;
-		var c = str[this.count];
-		switch (c) {
+		var token = tokenList[tokenCount];
+		switch (token) {
 		case '+':
 		case '-':
 		case '*':
@@ -111,148 +99,123 @@ var ConsGen = function() {
 		case '<=':
 		case '>=':
 		case 'if':
-			temp = new Cons("op", c, this.make(str));
+			temp = new Cons("op", token, makeConsTree(tokenList));
 			return temp;
 		case '(':
-			temp = new Cons("car", this.make(str), this.make(str));	
+			temp = new Cons("car", makeConsTree(tokenList), makeConsTree(tokenList));	
 			return temp;
 		case ')':
-			if (this.argFlag == 1) {
-				this.argFlag = 0;
-				var funcDef = new FuncDef(this.arrayOfArg);
-				this.arrayOfFuncDef[key] = funcDef;
+			if (argFlag == 1) {
+				argFlag = 0;
+				var funcInfo = new FuncInfo(arrayOfArg);
+				env.funcInfoMap[key] = funcInfo;
 			}
 			temp = null;
 			return temp;
 		case 'defun':
-			this.funcFlag = 1;
+			funcFlag = 1;
 			key = null;
-			this.arrayOfArg = [];
-			temp = new Cons("defun", c, this.make(str));
+			arrayOfArg = [];
+			temp = new Cons("defun", token, makeConsTree(tokenList));
 			return temp;
 		case 'setq':
-			temp = new Cons("setq", c, this.make(str));
+			temp = new Cons("setq", token, makeConsTree(tokenList));
 			return temp;
 		default:
-			var num = parseInt(c);
+			var num = parseInt(token);
 			if (!isNaN(num)) {
-				temp = new Cons("num", num, this.make(str));
+				temp = new Cons("num", num, makeConsTree(tokenList));
 				return temp;
 			}
 			
-			if (this.funcFlag == 1) {
-				this.funcFlag = 0;
-				this.argFlag = 1;
-				key = c;
-				temp = new Cons("func", c, this.make(str));
+			if (funcFlag == 1) {
+				funcFlag = 0;
+				argFlag = 1;
+				key = token;
+				temp = new Cons("func", token, makeConsTree(tokenList));
 				return temp;
 			} 
 				
-			if (this.argFlag == 1) {
-				this.arrayOfArg.push(c);
-				temp = new Cons("arg", c, this.make(str));
+			if (argFlag == 1) {
+				arrayOfArg.push(token);
+				temp = new Cons("arg", token, makeConsTree(tokenList));
 				return temp;
 			} 
 				
 			var type = "variable";
-			for (var i = 0, len = this.arrayOfArg.length; 
+			for (var i = 0, len = arrayOfArg.length; 
 					i < len; i++) {
-				if (this.arrayOfArg[i] == c) {
+				if (arrayOfArg[i] == token) {
 					type = "arg";
-					temp = new Cons(type, c, this.make(str));	
+					temp = new Cons(type, token, makeConsTree(tokenList));	
 					return temp;
 				}
 			}
 						
 			if (type == "variable") {
-				var value = this.arrayOfFuncDef[c];
+				var value = env.funcInfoMap[token];
 				if (typeof(value) === "undefined") {
 				} else {
 					type = "func";
 				}
 			}
-			temp = new Cons(type, c, this.make(str));	
+			temp = new Cons(type, token, makeConsTree(tokenList));	
 			return temp;
 		}
 	};
 	
-	this.printTree = function() {
-		console.log("printTree()");
-		for (var i = 0, consTreesNum = this.arrayOfConsTree.length; 
-				i < consTreesNum; i++) {
-			this.count = 0;
-			this.print(this.arrayOfConsTree[i]);	
-			console.log("");
-		}
-	};
+	for (var i = 0, len = arrayOfTokenList.length;
+				i < len; i++) {
+		tokenListLen= arrayOfTokenList[i].length;	
+		tokenCount = -1;
+		var consTree = makeConsTree(arrayOfTokenList[i]);
+		arrayOfConsTree.push(consTree);	
+	}
+	return arrayOfConsTree;
+};
 	
-	this.print = function(cons) {
-		this.count++;
-		console.log("{ type: " + cons.type + ", car: " + 
-				cons.car + ", cdr: " + typeof(cons.cdr) 
-				+ this.count + " }");
-		if (cons.type == "car") {
-			this.print(cons.car);
-		}
-		if (cons.cdr != null) {
-			this.print(cons.cdr);
-		}
-	};
-	
-	this.printFunc = function(key) {
-		console.log("printFunc()");
-		this.count = 0;
-		this.print(this.arrayOfFuncDef[key].consTree);
-	};
-	
-	this.execute = function() {
-		for (var i = 0, consTreesNum = this.arrayOfConsTree.length; 
-				i < consTreesNum; i++) {
-			console.log(this.evaluate(this.arrayOfConsTree[i].car, null));
-		}
-	};
-	
-	this.evaluate = function(cons, funcDef) {
+function execute(arrayOfConsTree, env) {	
+	function evaluate(cons, funcInfo) {
 		switch (cons.type) {
 		case "num":
 			return cons.car;
 		case "op":
 			switch (cons.car) {
 			case "+":
-				var ret = this.evaluate(cons.cdr, funcDef);
+				var ret = evaluate(cons.cdr, funcInfo);
 				var tempCons = cons.cdr;
 				do {
 					tempCons = tempCons.cdr;
-					ret += this.evaluate(tempCons, funcDef);
+					ret += evaluate(tempCons, funcInfo);
 				} while (tempCons.cdr != null);
 				return ret;
 			case "-":
-				var ret = this.evaluate(cons.cdr, funcDef);
+				var ret = evaluate(cons.cdr, funcInfo);
 				var tempCons = cons.cdr;
 				do {
 					tempCons = tempCons.cdr;
-					ret -= this.evaluate(tempCons, funcDef);
+					ret -= evaluate(tempCons, funcInfo);
 				} while (tempCons.cdr != null);
 				return ret;				
 			case "*":
-				var ret = this.evaluate(cons.cdr, funcDef);
+				var ret = evaluate(cons.cdr, funcInfo);
 				var tempCons = cons.cdr;
 				do {
 					tempCons = tempCons.cdr;
-					ret *= this.evaluate(tempCons, funcDef);
+					ret *= evaluate(tempCons, funcInfo);
 				} while (tempCons.cdr != null);
 				return ret;
 			case "/":
-				var ret = this.evaluate(cons.cdr, funcDef);
+				var ret = evaluate(cons.cdr, funcInfo);
 				var tempCons = cons.cdr;
 				do {
 					tempCons = tempCons.cdr;
-					ret /= this.evaluate(tempCons, funcDef);
+					ret /= evaluate(tempCons, funcInfo);
 				} while (tempCons.cdr != null);
 				return ret;
 			case "<":
-				var ret1 = this.evaluate(cons.cdr, funcDef);
-				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				var ret1 = evaluate(cons.cdr, funcInfo);
+				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
 				
 				if (ret1 < ret2) {
 					return "t";
@@ -260,8 +223,8 @@ var ConsGen = function() {
 					return "nil";
 				}		
 			case ">":
-				var ret1 = this.evaluate(cons.cdr, funcDef);
-				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				var ret1 = evaluate(cons.cdr, funcInfo);
+				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
 				
 				if (ret1 > ret2) {
 					return "t";
@@ -269,8 +232,8 @@ var ConsGen = function() {
 					return "nil";
 				}
 			case "<=":
-				var ret1 = this.evaluate(cons.cdr, funcDef);
-				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				var ret1 = evaluate(cons.cdr, funcInfo);
+				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
 				
 				if (ret1 <= ret2) {
 					return "t";
@@ -278,8 +241,8 @@ var ConsGen = function() {
 					return "nil";
 				}
 			case ">=":
-				var ret1 = this.evaluate(cons.cdr, funcDef);
-				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				var ret1 = evaluate(cons.cdr, funcInfo);
+				var ret2 = evaluate(cons.cdr.cdr, funcInfo);
 				
 				if (ret1 >= ret2) {
 					return "t";
@@ -287,48 +250,53 @@ var ConsGen = function() {
 					return "nil";
 				}
 			case "if":
-				var bool = this.evaluate(cons.cdr, funcDef);
+				var bool = evaluate(cons.cdr, funcInfo);
 				if (bool == "t") {
-					return this.evaluate(cons.cdr.cdr, funcDef);
+					return evaluate(cons.cdr.cdr, funcInfo);
 				} else {
-					return this.evaluate(cons.cdr.cdr.cdr, funcDef);
+					return evaluate(cons.cdr.cdr.cdr, funcInfo);
 				}
 			}				
 		case "car":
-			return this.evaluate(cons.car, funcDef);
+			return evaluate(cons.car, funcInfo);
 		case "defun":
 			var funcKey = cons.cdr.car;	
-			this.arrayOfFuncDef[funcKey].consTree = cons.cdr.cdr.cdr;			
+			env.funcInfoMap[funcKey].consTree = cons.cdr.cdr.cdr;			
 			return funcKey.toUpperCase();
 		case "func":
-			var tempFuncDef = new FuncDef(this.arrayOfFuncDef[cons.car].arrayOfArg);
-			var argLen = tempFuncDef.arrayOfArg.length;
+			var tempfuncInfo = new FuncInfo(env.funcInfoMap[cons.car].arrayOfArg);
+			var argLen = tempfuncInfo.arrayOfArg.length;
 			var tempCons = cons;
 	
-			tempFuncDef.consTree = this.arrayOfFuncDef[cons.car].consTree;
+			tempfuncInfo.consTree = env.funcInfoMap[cons.car].consTree;
 			for (var i = 0; i < argLen; i++) {
-				var argKey = tempFuncDef.arrayOfArg[i];
+				var argKey = tempfuncInfo.arrayOfArg[i];
 				tempCons = tempCons.cdr;
-				var arg = this.evaluate(tempCons, funcDef);
-				tempFuncDef.arrayOfArgValue[argKey] = arg;
+				var arg = evaluate(tempCons, funcInfo);
+				tempfuncInfo.arrayOfArgValue[argKey] = arg;
 			}
-			return this.evaluate(tempFuncDef.consTree, tempFuncDef);
+			return evaluate(tempfuncInfo.consTree, tempfuncInfo);
 		case "arg":
-			var argNum = funcDef.arrayOfArgValue[cons.car];
-			return argNum;	
+			var argValue = funcInfo.arrayOfArgValue[cons.car];
+			return argValue;	
 		case "setq":
 			var varKey = cons.cdr.car;
-			var setqRet = this.evaluate(cons.cdr.cdr, funcDef);
-			this.arrayOfVariable[varKey] = setqRet;
+			var setqRet = evaluate(cons.cdr.cdr, funcInfo);
+			env.varMap[varKey] = setqRet;
 			return setqRet;
 		case "variable":
-			var varNum = this.arrayOfVariable[cons.car];
-			return varNum;	
+			var varValue = env.varMap[cons.car];
+			return varValue;	
 		}
 	};
-};
+	
+	for (var i = 0, consTreesNum = arrayOfConsTree.length; 
+			i < consTreesNum; i++) {
+		console.log(evaluate(arrayOfConsTree[i].car, null));
+	}
+}
 
-var g = new ConsGen();
+var env = new Env();
 var args = process.argv;
 var len = args.length;
 
@@ -348,11 +316,8 @@ case 2:
 		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
 		//p.parse("(defun tak(x y z) (if (<= x y) y (tak (tak (- x 1) y z) (tak (- y 1) z x) (tak (- z 1) x y)))) (tak 12 6 0)");
 		var p = parse(line);
-		//console.log(p);
-		g.makeConsTree(p);
-		//g.printTree();
-		g.execute();
-		//g.printFunc("fib");
+		var consTree = genCons(p, env);
+		execute(consTree, env);
 	
 		repl.prompt();
 	});
@@ -368,8 +333,7 @@ case 3:
 		if (err) {
 			console.log(err);
 		} else {
-			g.makeConsTree(parse(str));
-			g.execute();
+			execute(genCons(parse(str), env), env);
 		}
 	});
 	break;
