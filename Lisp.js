@@ -1,5 +1,5 @@
 var parse = function(str) {
-	var temp = "";
+	var tokenBuf = "";
 	var parsedString = [];
 	var arrayOfParsedString = [];
 	var flag = 0;
@@ -9,7 +9,13 @@ var parse = function(str) {
 		var c = str.charAt(i);
 		switch (c) {
 		case '(':
-		    headCount++;
+			// buffer flush
+			if (tokenBuf.length != 0) {
+				parsedString.push(tokenBuf);
+				tokenBuf = "";
+			}
+			
+			headCount++;
 			if (flag == 0) {
 				flag = 1;
 			} else {
@@ -18,13 +24,15 @@ var parse = function(str) {
 			parsedString.push(c);
 			break;
 		case ')':
-			tailCount++;
-			if (temp.length != 0) {
-				parsedString.push(temp);
-				temp = "";
+			// buffer flush
+			if (tokenBuf.length != 0) {
+				parsedString.push(tokenBuf);
+				tokenBuf = "";
 			}
+			
 			parsedString.push(c);
 			
+			tailCount++;
 			if (headCount == tailCount) {
 				flag = 0;
 				headCount = 0;
@@ -36,13 +44,13 @@ var parse = function(str) {
 		case ' ':
 		case '\t':
 		case '\n':
-			if (temp.length != 0) {
-				parsedString.push(temp);
-				temp = "";
+			if (tokenBuf.length != 0) {
+				parsedString.push(tokenBuf);
+				tokenBuf = "";
 			}
 			break;
 		default:
-			temp = temp.concat(c);
+			tokenBuf = tokenBuf.concat(c);
 			break;
 		}
 	}
@@ -108,6 +116,9 @@ var ConsGen = function() {
 		case '*':
 		case '/':
 		case '<':
+		case '>':
+		case '<=':
+		case '>=':
 		case 'if':
 			temp = new Cons("op", c, this.make(str));
 			break;
@@ -266,6 +277,24 @@ var ConsGen = function() {
 				} else {
 					return "nil";
 				}
+			case "<=":
+				var ret1 = this.evaluate(cons.cdr, funcDef);
+				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				
+				if (ret1 <= ret2) {
+					return "t";
+				} else {
+					return "nil";
+				}
+			case ">=":
+				var ret1 = this.evaluate(cons.cdr, funcDef);
+				var ret2 = this.evaluate(cons.cdr.cdr, funcDef);
+				
+				if (ret1 >= ret2) {
+					return "t";
+				} else {
+					return "nil";
+				}
 			case "if":
 				var bool = this.evaluate(cons.cdr, funcDef);
 				if (bool == "t") {
@@ -278,7 +307,7 @@ var ConsGen = function() {
 			return this.evaluate(cons.car, funcDef);
 		case "defun":
 			var funcKey = cons.cdr.car;	
-			this.arrayOfFuncDef[funcKey].consTree = cons.cdr.cdr.cdr.car;			
+			this.arrayOfFuncDef[funcKey].consTree = cons.cdr.cdr.cdr;			
 			return funcKey.toUpperCase();
 		case "func":
 			var tempFuncDef = new FuncDef(this.arrayOfFuncDef[cons.car].arrayOfArg);
@@ -327,7 +356,9 @@ case 2:
 		console.log(line); //変数lineにシェルに入力した文字列が入るので、これを解析すれば良い。
 		//p.parse("(defun fib (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib 36)");
 		//p.parse("(defun tak(x y z) (if (<= x y) y (tak (tak (- x 1) y z) (tak (- y 1) z x) (tak (- z 1) x y)))) (tak 12 6 0)");
-		g.makeConsTree(parse(line));
+		var p = parse(line);
+		//console.log(p);
+		g.makeConsTree(p);
 		//g.printTree();
 		g.execute();
 		//g.printFunc("fib");
