@@ -4,26 +4,25 @@ function parse(expr) {
 	var arrayOfTokenList = [];
 	var headCount = 0;
 	var tailCount = 0;
+	
+	function bufferFlush() {
+		if (tokenBuf.length != 0) {
+			tokenList.push(tokenBuf);
+			tokenBuf = "";
+		}
+	};
+	
 	for (var i = 0, len = expr.length; i < len; i++) {
 		var c = expr.charAt(i);
 		switch (c) {
 		case '(':
-			if (tokenBuf.length != 0) {
-				tokenList.push(tokenBuf);
-				tokenBuf = "";
-			}
-			
+			bufferFlush();
 			headCount++;
 			tokenList.push(c);
 			break;
 		case ')':
-			if (tokenBuf.length != 0) {
-				tokenList.push(tokenBuf);
-				tokenBuf = "";
-			}
-			
-			tokenList.push(c);
-			
+			bufferFlush();
+			tokenList.push(c);		
 			tailCount++;
 			if (headCount == tailCount) {
 				headCount = tailCount = 0;
@@ -34,10 +33,7 @@ function parse(expr) {
 		case ' ':
 		case '\t':
 		case '\n':
-			if (tokenBuf.length != 0) {
-				tokenList.push(tokenBuf);
-				tokenBuf = "";
-			}
+			bufferFlush();
 			break;
 		default:
 			tokenBuf = tokenBuf.concat(c);
