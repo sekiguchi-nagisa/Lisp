@@ -112,10 +112,10 @@ var ConsGen = function() {
 		case '>=':
 		case 'if':
 			temp = new Cons("op", c, this.make(str));
-			break;
+			return temp;
 		case '(':
 			temp = new Cons("car", this.make(str), this.make(str));	
-			break;
+			return temp;
 		case ')':
 			if (this.argFlag == 1) {
 				this.argFlag = 0;
@@ -123,16 +123,16 @@ var ConsGen = function() {
 				this.arrayOfFuncDef[key] = funcDef;
 			}
 			temp = null;
-			break;
+			return temp;
 		case 'defun':
 			this.funcFlag = 1;
 			key = null;
 			this.arrayOfArg = [];
 			temp = new Cons("defun", c, this.make(str));
-			break;
+			return temp;
 		case 'setq':
 			temp = new Cons("setq", c, this.make(str));
-			break;
+			return temp;
 		default:
 			var num = parseInt(c);
 			if (!isNaN(num)) {
@@ -159,7 +159,8 @@ var ConsGen = function() {
 					i < len; i++) {
 				if (this.arrayOfArg[i] == c) {
 					type = "arg";
-					break;
+					temp = new Cons(type, c, this.make(str));	
+					return temp;
 				}
 			}
 						
@@ -171,10 +172,8 @@ var ConsGen = function() {
 				}
 			}
 			temp = new Cons(type, c, this.make(str));	
-				
-			break;
+			return temp;
 		}
-		return temp;
 	};
 	
 	this.printTree = function() {
