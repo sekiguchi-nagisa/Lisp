@@ -2,7 +2,6 @@ var parse = function(expr) {
 	var tokenBuf = "";
 	var tokenList = [];
 	var arrayOfTokenList = [];
-	var flag = 0;
 	var headCount = 0;
 	var tailCount = 0;
 	for (var i = 0, len = expr.length; i < len; i++) {
@@ -15,11 +14,6 @@ var parse = function(expr) {
 			}
 			
 			headCount++;
-			if (flag == 0) {
-				flag = 1;
-			} else {
-				tokenList.push('#');
-			}
 			tokenList.push(c);
 			break;
 		case ')':
@@ -32,7 +26,6 @@ var parse = function(expr) {
 			
 			tailCount++;
 			if (headCount == tailCount) {
-				flag = 0;
 				headCount = 0;
 				tailCount = 0;
 				arrayOfTokenList.push(tokenList);
@@ -65,7 +58,7 @@ var ConsGen = function() {
 	this.arrayOfConsTree = [];
 	this.arrayOfFuncDef = new Object();
 	this.arrayOfVariable = new Object();
-	this.arrayOfParsedString = [];
+	this.arrayOfTokenList = [];
 	
 	this.count = -1;
 	this.len = null;
@@ -87,15 +80,15 @@ var ConsGen = function() {
 		this.consTree = null;
 	};
 	
-	this.makeConsTree = function(arrayOfParsedString) {
-		this.arrayOfParsedString = arrayOfParsedString;
+	this.makeConsTree = function(arrayOfTokenList) {
+		this.arrayOfTokenList = arrayOfTokenList;
 		this.arrayOfConsTree = [];
 		var consTree;
-		for (var i = 0, len = this.arrayOfParsedString.length;
+		for (var i = 0, len = this.arrayOfTokenList.length;
 				i < len; i++) {
-			this.len = this.arrayOfParsedString[i].length;	
+			this.len = this.arrayOfTokenList[i].length;	
 			this.count = -1;
-			consTree = this.make(this.arrayOfParsedString[i]);
+			consTree = this.make(this.arrayOfTokenList[i]);
 			this.arrayOfConsTree.push(consTree);	
 		}
 	};
@@ -120,11 +113,8 @@ var ConsGen = function() {
 		case 'if':
 			temp = new Cons("op", c, this.make(str));
 			break;
-		case '#':
-			temp = new Cons("car", this.make(str), this.make(str));	
-			break;
 		case '(':
-			temp = this.make(str);
+			temp = new Cons("car", this.make(str), this.make(str));	
 			break;
 		case ')':
 			if (this.argFlag == 1) {
@@ -215,7 +205,7 @@ var ConsGen = function() {
 	this.execute = function() {
 		for (var i = 0, consTreesNum = this.arrayOfConsTree.length; 
 				i < consTreesNum; i++) {
-			console.log(this.evaluate(this.arrayOfConsTree[i], null));
+			console.log(this.evaluate(this.arrayOfConsTree[i].car, null));
 		}
 	};
 	
