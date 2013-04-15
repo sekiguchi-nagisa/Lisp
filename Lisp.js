@@ -1,17 +1,16 @@
-var parse = function(str) {
+var parse = function(expr) {
 	var tokenBuf = "";
-	var parsedString = [];
-	var arrayOfParsedString = [];
+	var tokenList = [];
+	var arrayOfTokenList = [];
 	var flag = 0;
 	var headCount = 0;
 	var tailCount = 0;
-	for (var i = 0, len = str.length; i < len; i++) {
-		var c = str.charAt(i);
+	for (var i = 0, len = expr.length; i < len; i++) {
+		var c = expr.charAt(i);
 		switch (c) {
 		case '(':
-			// buffer flush
 			if (tokenBuf.length != 0) {
-				parsedString.push(tokenBuf);
+				tokenList.push(tokenBuf);
 				tokenBuf = "";
 			}
 			
@@ -19,33 +18,32 @@ var parse = function(str) {
 			if (flag == 0) {
 				flag = 1;
 			} else {
-				parsedString.push('#');
+				tokenList.push('#');
 			}
-			parsedString.push(c);
+			tokenList.push(c);
 			break;
 		case ')':
-			// buffer flush
 			if (tokenBuf.length != 0) {
-				parsedString.push(tokenBuf);
+				tokenList.push(tokenBuf);
 				tokenBuf = "";
 			}
 			
-			parsedString.push(c);
+			tokenList.push(c);
 			
 			tailCount++;
 			if (headCount == tailCount) {
 				flag = 0;
 				headCount = 0;
 				tailCount = 0;
-				arrayOfParsedString.push(parsedString);
-				parsedString = [];
+				arrayOfTokenList.push(tokenList);
+				tokenList = [];
 			}
 			break;
 		case ' ':
 		case '\t':
 		case '\n':
 			if (tokenBuf.length != 0) {
-				parsedString.push(tokenBuf);
+				tokenList.push(tokenBuf);
 				tokenBuf = "";
 			}
 			break;
@@ -54,7 +52,13 @@ var parse = function(str) {
 			break;
 		}
 	}
-	return arrayOfParsedString;
+	return arrayOfTokenList;
+};
+
+var Cons = function(type, car, cdr) {
+	this.type = type;
+	this.car = car;
+	this.cdr = cdr;
 };
 
 var ConsGen = function() {
@@ -67,14 +71,8 @@ var ConsGen = function() {
 	this.len = null;
 	this.funcFlag = 0;
 	this.argFlag = 0;
-	this.key = null;
+	var key = null;
 	this.arrayOfArg = [];
-	
-	var Cons = function(type, car, cdr) {
-		this.type = type;
-		this.car = car;
-		this.cdr = cdr;
-	};
 	
 	var FuncDef = function(arrayOfArg) {
 		var len = arrayOfArg.length;
@@ -132,13 +130,13 @@ var ConsGen = function() {
 			if (this.argFlag == 1) {
 				this.argFlag = 0;
 				var funcDef = new FuncDef(this.arrayOfArg);
-				this.arrayOfFuncDef[this.key] = funcDef;
+				this.arrayOfFuncDef[key] = funcDef;
 			}
 			temp = null;
 			break;
 		case 'defun':
 			this.funcFlag = 1;
-			this.key = null;
+			key = null;
 			this.arrayOfArg = [];
 			temp = new Cons("defun", c, this.make(str));
 			break;
@@ -151,7 +149,7 @@ var ConsGen = function() {
 				if (this.funcFlag == 1) {
 					this.funcFlag = 0;
 					this.argFlag = 1;
-					this.key = c;
+					key = c;
 					temp = new Cons("func", c, this.make(str));
 				} else {
 					if (this.argFlag == 1) {
