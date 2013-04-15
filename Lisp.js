@@ -26,8 +26,7 @@ function parse(expr) {
 			
 			tailCount++;
 			if (headCount == tailCount) {
-				headCount = 0;
-				tailCount = 0;
+				headCount = tailCount = 0;
 				arrayOfTokenList.push(tokenList);
 				tokenList = [];
 			}
@@ -54,11 +53,6 @@ var Cons = function(type, car, cdr) {
 	this.cdr = cdr;
 };
 
-var Env = function() {
-	this.varMap = new Object();
-	this.funcInfoMap = new Object();
-};
-
 var FuncInfo= function(arrayOfArg) {
 	var len = arrayOfArg.length;
 	var newArgs = [];
@@ -72,12 +66,47 @@ var FuncInfo= function(arrayOfArg) {
 	this.consTree = null;
 };
 
+var Env = function() {
+	this.varMap = new Object();
+	this.funcInfoMap = new Object();
+	
+	var count = 0;
+	function print(cons) {
+		count++;
+		console.log("{ type: " + cons.type + ", car: " + 
+				cons.car + ", cdr: " + typeof(cons.cdr) 
+				+ count + " }");
+		if (cons.type == "car") {
+			print(cons.car);
+		}
+		if (cons.cdr != null) {
+			print(cons.cdr);
+		}
+	};
+	
+	this.printTree = function(arrayOfConsTree) {
+		console.log("printTree()");
+		for (var i = 0, consTreesNum = arrayOfConsTree.length; 
+				i < consTreesNum; i++) {
+			count = 0;
+			print(arrayOfConsTree[i]);	
+			console.log("");
+		}
+	};
+	
+	this.printFunc = function(key, env) {
+		console.log("printFunc()");
+		count = 0;
+		print(env.funcInfoMap[key].consTree);
+	};
+};
+
 function genCons(arrayOfTokenList, env) {
 	var arrayOfConsTree = [];
 	var tokenListLen = 0;
 	var tokenCount = -1;
-	var funcFlag = 0;
-	var argFlag = 0;
+	var isFunc = 0;
+	var isArg = 0;
 	var key = null;
 	var arrayOfArg = [];
 	
@@ -105,15 +134,15 @@ function genCons(arrayOfTokenList, env) {
 			newCons = new Cons("car", makeConsTree(tokenList), makeConsTree(tokenList));	
 			return newCons;
 		case ')':
-			if (argFlag == 1) {
-				argFlag = 0;
+			if (isArg == 1) {
+				isArg = 0;
 				var funcInfo = new FuncInfo(arrayOfArg);
 				env.funcInfoMap[key] = funcInfo;
 			}
 			newCons = null;
 			return newCons;
 		case 'defun':
-			funcFlag = 1;
+			isFunc = 1;
 			key = null;
 			arrayOfArg = [];
 			newCons = new Cons("defun", token, makeConsTree(tokenList));
@@ -128,15 +157,15 @@ function genCons(arrayOfTokenList, env) {
 				return newCons;
 			}
 			
-			if (funcFlag == 1) {
-				funcFlag = 0;
-				argFlag = 1;
+			if (isFunc == 1) {
+				isFunc = 0;
+				isArg = 1;
 				key = token;
 				newCons = new Cons("func", token, makeConsTree(tokenList));
 				return newCons;
 			} 
 				
-			if (argFlag == 1) {
+			if (isArg == 1) {
 				arrayOfArg.push(token);
 				newCons = new Cons("arg", token, makeConsTree(tokenList));
 				return newCons;
@@ -272,7 +301,7 @@ function execute(arrayOfConsTree, env) {
 			i < consTreesNum; i++) {
 		console.log(evaluate(arrayOfConsTree[i].car, null));
 	}
-}
+};
 
 var env = new Env();
 var args = process.argv;
